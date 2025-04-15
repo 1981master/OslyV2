@@ -1,0 +1,21 @@
+spring:
+    application:
+    name: oslyOnlineShoping
+
+    datasource:
+        url: jdbc:mysql://localhost:3306/oslee?useSSL=false&allowPublicKeyRetrieval=true
+        username: root
+        password: 1981
+        driver-class-name: com.mysql.cj.jdbc.Driver
+
+    jpa:
+        hibernate:
+            ddl-auto: update  # or use `create`, `create-drop`, `validate`, or `none` depending on your needs
+        show-sql: true
+        properties:
+            hibernate.dialect: org.hibernate.dialect.MySQL8Dialect
+            hibernate.physical_naming_strategy: org.hibernate.boot.model.naming.PhysicalNamingStrategyStandardImpl
+
+
+server:
+    port: 8082
