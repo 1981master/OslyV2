@@ -1,6 +1,11 @@
 package com.master.oslyOnlineShoping.controller;
 
 import com.master.oslyOnlineShoping.dto.LoginRequest;
+import com.master.oslyOnlineShoping.dto.SignupRequest;
+import com.master.oslyOnlineShoping.entity.security.Role;
+import com.master.oslyOnlineShoping.entity.security.User;
+import com.master.oslyOnlineShoping.repository.RoleRepository;
+import com.master.oslyOnlineShoping.repository.UserRepository;
 import com.master.oslyOnlineShoping.util.JwtResponse;
 import com.master.oslyOnlineShoping.util.JwtUtil;
 
@@ -12,7 +17,10 @@ import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.Set;
 
 @RestController
 @RequestMapping("/api/auth")
@@ -23,9 +31,19 @@ public class OsleeController {
   private final AuthenticationManager authenticationManager;
   private final JwtUtil jwtUtil;
 
-  public OsleeController(AuthenticationManager authenticationManager, JwtUtil jwtUtil) {
+  private final UserRepository userRepository;
+
+  private final PasswordEncoder passwordEncoder;
+
+  private final RoleRepository roleRepository;
+
+
+  public OsleeController(AuthenticationManager authenticationManager, JwtUtil jwtUtil, UserRepository userRepository, PasswordEncoder passwordEncoder, RoleRepository roleRepository) {
     this.authenticationManager = authenticationManager;
     this.jwtUtil = jwtUtil;
+    this.userRepository = userRepository;
+    this.passwordEncoder = passwordEncoder;
+    this.roleRepository = roleRepository;
   }
 
   @PostMapping("/login")
@@ -49,4 +67,34 @@ public class OsleeController {
     // Return response with JWT token
     return ResponseEntity.ok(new JwtResponse(jwt));
   }
+
+  @PostMapping("/signup")
+  public ResponseEntity<?> signup(@RequestBody SignupRequest request) {
+    logger.info("Signup attempt for user: {}", request.getUsername());
+
+    if (userRepository.existsByUsername(request.getUsername())) {
+      return ResponseEntity.badRequest().body("Username is already taken");
+    }
+
+    if (userRepository.existsByEmail(request.getEmail())) {
+      return ResponseEntity.badRequest().body("Email is already in use");
+    }
+
+    // Create new user
+    User user = new User();
+    user.setUsername(request.getUsername());
+    user.setEmail(request.getEmail());
+    user.setPassword(passwordEncoder.encode(request.getPassword()));
+
+    // Load existing role from DB
+    Role userRole = roleRepository.findByName("user")
+            .orElseThrow(() -> new RuntimeException("Error: Role not found"));
+
+    user.setRoles(Set.of(userRole));
+    userRepository.saveAndFlush(user);
+
+    return ResponseEntity.ok("User registered successfully");
+  }
+
+
 }
