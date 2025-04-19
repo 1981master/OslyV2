@@ -1,8 +1,12 @@
 package com.master.oslyOnlineShoping.entity.security;
 
 import jakarta.persistence.*;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
+
 import java.time.LocalDateTime;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 @Entity
 @Table(name = "Users")
@@ -98,5 +102,13 @@ public class User {
 
     public void setRoles(Set<Role> roles) {
         this.roles = roles;
+    }
+
+    public Set<GrantedAuthority> getAuthorities() {
+        // Assuming each role has permissions in the 'permissions' field
+        return roles.stream()
+                .flatMap(role -> role.getPermissions().stream()) // Assuming 'getPermissions()' method exists in 'Role'
+                .map(permission -> new SimpleGrantedAuthority(permission.getName()))
+                .collect(Collectors.toSet());
     }
 }
