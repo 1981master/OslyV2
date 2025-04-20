@@ -106,6 +106,8 @@ public class ProductController {
     @GetMapping("/products")
     public List<Product> getAllProducts() {
         logger.info("Fetching all products...");
+        List<Product> product =  productRepository.findAll();
+//        logger.info("----------------> {}", product.get(0).getImageUrl());
         return productRepository.findAll();
     }
 
